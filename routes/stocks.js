@@ -3,10 +3,11 @@ const router = express.Router();
 
 const axios = require('axios');
 
+const { getDateString, calcMonthAgo } = require('../utils/helperFuncs');
+
 require('dotenv').config();
 const apiKey = process.env.API_KEY;
 const baseURL = 'https://api.polygon.io/v3/reference/tickers?market=stocks&active=true&sort=market&limit=10';
-const unixMonth = 2_592_000;
 
 const fetchStockByTicker = async ticker => {
   let stockData;
@@ -31,6 +32,19 @@ const fetchStockByName = async name => {
   return stocksData; // array of 0, 1 or more stocks
 };
 
+const getPreviousClose = async ticker => {
+  const today = new Date();
+  const monthAgo = calcMonthAgo(today);
+
+  const dateToday = getDateString(today);
+  const dateMonthAgo = getDateString(monthAgo);
+
+  const res = await axios.get(
+    `https://api.polygon.io/v2/aggs/ticker/${ticker}/range/1/day/${dateMonthAgo}/${dateToday}?adjusted=true&sort=asc&limit=31&apiKey=${apiKey}`
+  );
+  return res;
+};
+
 router.get('/', async (req, res) => {
   const { type, query } = req.query;
 
@@ -52,7 +66,16 @@ router.get('/', async (req, res) => {
     data: { count, results },
   } = data;
 
-  if (count > 1) return res.send({ count, results });
+  if (results.length === 0) return res.status(200).send('no results');
+
+  if (count === 1) {
+    const marketData = await getPreviousClose(results[0].ticker);
+
+    res.status(200).send(marketData.data);
+    return;
+  }
+
+  res.send({ count, results });
 });
 
 module.exports = router;
