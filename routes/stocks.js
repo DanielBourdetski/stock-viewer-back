@@ -48,9 +48,11 @@ router.get('/', async (req, res) => {
       break;
   }
 
-  if (data.data.count === 1) res.send(data.data.results[0]);
+  const {
+    data: { count, results },
+  } = data;
 
-  // res.send(data.data);
+  if (count > 1) return res.send({ count, results });
 });
 
 module.exports = router;
