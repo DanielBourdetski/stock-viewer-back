@@ -2,9 +2,9 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 
-app.get('/', (req, res) => {
-  res.send('Hello World!');
-});
+const stocks = require('./routes/stocks');
+
+app.use('/', stocks);
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
