@@ -32,7 +32,7 @@ const fetchStockByName = async name => {
   return stocksData; // array of 0, 1 or more stocks
 };
 
-const getPreviousClose = async ticker => {
+const getStockMarket = async ticker => {
   const today = new Date();
   const monthAgo = calcMonthAgo(today);
 
@@ -52,30 +52,35 @@ router.get('/', async (req, res) => {
 
   let data;
 
-  switch (type) {
-    case 'ticker':
-      data = await fetchStockByTicker(query);
-      break;
+  try {
+    switch (type) {
+      case 'ticker':
+      case 'market data':
+        data = await fetchStockByTicker(query);
+        break;
 
-    case 'name':
-      data = await fetchStockByName(query);
-      break;
+      case 'name':
+        data = await fetchStockByName(query);
+        break;
+    }
+
+    const {
+      data: { count, results },
+    } = data;
+
+    if (results.length === 0) return res.status(200).send();
+
+    if (count === 1) {
+      const marketData = await getStockMarket(results[0].ticker);
+
+      res.status(200).send({ data: marketData.data, type: 'marketData', name: results[0].name });
+      return;
+    }
+
+    res.send({ data: results, type: 'stock list' });
+  } catch (err) {
+    console.log(err);
   }
-
-  const {
-    data: { count, results },
-  } = data;
-
-  if (results.length === 0) return res.status(200).send('no results');
-
-  if (count === 1) {
-    const marketData = await getPreviousClose(results[0].ticker);
-
-    res.status(200).send(marketData.data);
-    return;
-  }
-
-  res.send({ count, results });
 });
 
 module.exports = router;
