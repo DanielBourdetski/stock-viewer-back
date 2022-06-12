@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+const stockSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  symbol: {
+    type: String,
+    required: true,
+  },
+  valueAtSave: {},
+  saveTime: {},
+});
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -20,7 +33,7 @@ const userSchema = new mongoose.Schema({
     default: () => Date.now(),
   },
   updatedAt: Date,
-  savedStocks: mongoose.SchemaTypes.ObjectId,
+  savedStocks: [stockSchema],
 });
 
 const User = mongoose.model('User', userSchema);
